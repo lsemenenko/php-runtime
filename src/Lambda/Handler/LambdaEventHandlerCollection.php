@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Ymir\Runtime\Lambda\Handler;
 
 use Ymir\Runtime\Lambda\InvocationEvent\InvocationEventInterface;
+use Ymir\Runtime\Lambda\InvocationEvent\HttpRequestEvent;
 use Ymir\Runtime\Lambda\Response\ResponseInterface;
 use Ymir\Runtime\Logger;
 
@@ -78,10 +79,57 @@ class LambdaEventHandlerCollection implements LambdaEventHandlerInterface
         $this->logger->debug(sprintf('"%s" handler selected for the event', get_class($handler)));
 
         $response = $handler->handle($event);
+        $responseData = $response->getResponseData();
 
-        $this->logger->debug(sprintf('"%s" handler response:', get_class($handler)), $response->getResponseData());
+        $this->logger->debug(sprintf('"%s" handler response:', get_class($handler)), $responseData);
+
+        if ($event instanceof HttpRequestEvent) {
+            $this->logHttpAccess($event, $responseData);
+        }
 
         return $response;
+    }
+
+    /**
+     * Log an nginx-style access line for HTTP events to CloudWatch.
+     */
+    private function logHttpAccess(HttpRequestEvent $event, array $responseData): void
+    {
+        $headers = $event->getHeaders();
+        $getHeader = function (string $name) use ($headers) {
+            $name = strtolower($name);
+
+            return $headers[$name][0] ?? '-';
+        };
+
+        $uri = $event->getPath();
+        $queryString = $event->getQueryString();
+
+        if (!empty($queryString)) {
+            $uri .= '?'.$queryString;
+        }
+
+        $statusCode = isset($responseData['statusCode']) ? (int) $responseData['statusCode'] : 200;
+        $body = $responseData['body'] ?? '';
+        $bytesSent = 0;
+
+        if (is_string($body)) {
+            $decodedBody = base64_decode($body, true);
+            $bytesSent = false === $decodedBody ? strlen($body) : strlen($decodedBody);
+        }
+
+        $this->logger->info(sprintf(
+            '%s - - [%s] "%s %s %s" %d %d "%s" "%s"',
+            $event->getSourceIp() ?: '-',
+            date('d/M/Y:H:i:s O'),
+            $event->getMethod(),
+            $uri ?: '/',
+            $event->getProtocol(),
+            $statusCode,
+            $bytesSent,
+            $getHeader('referer') ?: '-',
+            $getHeader('user-agent') ?: '-'
+        ));
     }
 
     /**
