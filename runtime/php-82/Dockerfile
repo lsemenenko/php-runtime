@@ -150,7 +150,7 @@ RUN git clone https://github.com/lsemenenko/php-runtime.git /tmp/runtime-build \
  && cd /opt \
  && cp -R /tmp/runtime-build/composer.json /tmp/runtime-build/composer.lock /tmp/runtime-build/runtime/bootstrap /tmp/runtime-build/runtime/runtime.php /tmp/runtime-build/src /tmp/runtime-build/templates ./ \
  && chmod 0555 /opt/bootstrap /opt/runtime.php \
- && composer install --no-dev
+ && composer install --no-dev --classmap-authoritative --optimize-autoloader
 
 # Now we start back from a clean image.
 # We get rid of everything that is unnecessary (build tools, source code, and anything else
