@@ -5,7 +5,7 @@ ARG CPU_ARCHITECTURE
 # Platform used to build the image. Can be "linux/amd64" or "linux/arm64".
 ARG DOCKER_PLATFORM
 
-FROM --platform=${DOCKER_PLATFORM} ymirapp/${BASE_IMAGE}:${CPU_ARCHITECTURE} as php-build
+FROM --platform=${DOCKER_PLATFORM} lsemenenko/${BASE_IMAGE}:${CPU_ARCHITECTURE} as php-build
 
 ###############################################################################
 # Oniguruma
@@ -144,9 +144,9 @@ COPY php.ini ${INSTALL_DIR}/etc/php/conf.d
 COPY php-fpm.conf ${INSTALL_DIR}/etc/php-fpm.d
 
 # Build PHP runtime
-RUN git clone https://github.com/ymirapp/php-runtime.git /tmp/runtime-build \
+RUN git clone https://github.com/lsemenenko/php-runtime.git /tmp/runtime-build \
  && cd /tmp/runtime-build \
- && git checkout tags/v1.15.4 \
+ && git checkout tags/1.15.4 \
  && cd /opt \
  && cp -R /tmp/runtime-build/composer.json /tmp/runtime-build/composer.lock /tmp/runtime-build/runtime/bootstrap /tmp/runtime-build/runtime/runtime.php /tmp/runtime-build/src /tmp/runtime-build/templates ./ \
  && chmod 0555 /opt/bootstrap /opt/runtime.php \
