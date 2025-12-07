@@ -553,4 +553,4 @@ RUN cp /usr/lib64/libjpeg.so.62 /opt/ymir/lib/libjpeg.so.62
 RUN cp /usr/lib64/libgomp.so.1 /opt/ymir/lib/libgomp.so.1
 
 # Clean yum cache (free up over 1GB of space)
-RUN RUN LD_LIBRARY_PATH= yum clean all
+RUN LD_LIBRARY_PATH= yum clean all
