@@ -7,19 +7,19 @@ build-php%.zip: publish-images
 	PHP_VERSION=$$(echo $@ | cut -d'.' -f 1 | cut -d'-' -f 2,3); \
 	echo rm ${PWD}/../build/$$PHP_VERSION.zip; \
 	echo rm ${PWD}/../build/arm-$$PHP_VERSION.zip; \
-	echo docker run --rm --platform linux/amd64 --entrypoint "/export.sh" --env ARCHIVE_FILENAME=$$PHP_VERSION --volume ${PWD}/../:/ymir --volume ${PWD}/export.sh:/export.sh:ro lsemenenko/php-runtime:$$PHP_VERSION .; \
-	echo docker run --rm --platform linux/arm64 --entrypoint "/export.sh" --env ARCHIVE_FILENAME=arm-$$PHP_VERSION --volume ${PWD}/../:/ymir --volume ${PWD}/export.sh:/export.sh:ro lsemenenko/arm-php-runtime:$$PHP_VERSION .
+	docker run --rm --platform linux/amd64 --entrypoint "/export.sh" --env ARCHIVE_FILENAME=$$PHP_VERSION --volume ${PWD}/../:/ymir --volume ${PWD}/export.sh:/export.sh:ro lsemenenko/php-runtime:$$PHP_VERSION .; \
+	docker run --rm --platform linux/arm64 --entrypoint "/export.sh" --env ARCHIVE_FILENAME=arm-$$PHP_VERSION --volume ${PWD}/../:/ymir --volume ${PWD}/export.sh:/export.sh:ro lsemenenko/arm-php-runtime:$$PHP_VERSION .
 
 publish-images-%:
 	CPU_ARCHITECTURE=$$(echo '$*' | cut -d '-' -f 2); \
 	DOCKER_PLATFORM=$$(echo '$*' | cut -d '-' -f 1 | sed 's/_/\//'); \
 	if [ "$$CPU_ARCHITECTURE" = "x86_64" ]; then \
-		RUNTIME_REPO="lsemenenko/php-runtime"; \
+	 RUNTIME_REPO="lsemenenko/php-runtime"; \
 	else \
-		RUNTIME_REPO="lsemenenko/arm-php-runtime"; \
+	RUNTIME_REPO="lsemenenko/arm-php-runtime"; \
 	fi; \
-	echo cd base ; echo docker build -t lsemenenko/base:$$CPU_ARCHITECTURE . --push --platform=$$DOCKER_PLATFORM --build-arg DOCKER_PLATFORM=$$DOCKER_PLATFORM --build-arg CPU_ARCHITECTURE=$$CPU_ARCHITECTURE; \
-    echo cd ../php-82 ; echo docker build -t $$RUNTIME_REPO:php-82 . --load --push --build-arg BASE_IMAGE=base --platform=$$DOCKER_PLATFORM --build-arg DOCKER_PLATFORM=$$DOCKER_PLATFORM --build-arg CPU_ARCHITECTURE=$$CPU_ARCHITECTURE;
+	cd base ; DEPO_USE_SPOT=true depo build -t lsemenenko/base:$$CPU_ARCHITECTURE . --push --platform=$$DOCKER_PLATFORM --build-arg DOCKER_PLATFORM=$$DOCKER_PLATFORM --build-arg CPU_ARCHITECTURE=$$CPU_ARCHITECTURE; \
+   cd ../php-82 ; DEPO_USE_SPOT=true depo build -t $$RUNTIME_REPO:php-82 . --push --build-arg BASE_IMAGE=base --platform=$$DOCKER_PLATFORM --build-arg DOCKER_PLATFORM=$$DOCKER_PLATFORM --build-arg CPU_ARCHITECTURE=$$CPU_ARCHITECTURE;
 
 publish-images: publish-images-linux_amd64-x86_64 publish-images-linux_arm64-arm64
 
